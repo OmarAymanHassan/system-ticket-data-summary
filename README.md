@@ -39,21 +39,24 @@ Model strategy: `gemma-4-31b-it` for development (very high free-tier quota),
 switch the line to `gemini-3.5-flash` for final runs where narrative polish
 matters most. Only `.env` changes - no code edits needed.
 
-## Deploy on Streamlit Community Cloud
+## Live demo
 
-1. Push this repo to GitHub. `.env` is git-ignored; `.env.example` documents
-   the required variables.
-2. On [share.streamlit.io](https://share.streamlit.io): New app, pick the
-   repo/branch, main file `app.py`.
-3. In the app's Settings, add Secrets:
+**[system-ticket-data-summary.streamlit.app](https://system-ticket-data-summary-dyyv4y8wcykbbxvf7huqfj.streamlit.app/)**
 
-   ```toml
-   GOOGLE_API_KEY = "your-key-here"
-   GEMINI_MODEL = "gemma-4-31b-it"
-   ```
+How to use it:
 
-   Streamlit exposes top-level secrets as environment variables, so the app
-   picks them up with no code changes.
+1. Upload `Ticket Data (2).txt` in the sidebar - or `data/headerless_test.txt`
+   to see the automatic header detection in action.
+2. The data-quality panel reports the 19 repaired shifted tickets; the metric
+   row shows raw vs analyzed counts.
+3. **AI Summaries** tab: click *Generate summaries*, then pick a customer and
+   a product to read its five-section story (try customer 123 + Hardware -
+   the richest one).
+4. **Insights** tab: the executive scorecard and the three business questions,
+   with product/customer filters - every finding recomputes live.
+
+Secrets (`GOOGLE_API_KEY`, `GEMINI_MODEL`) are provided through Streamlit
+Cloud's secrets manager; nothing sensitive is stored in this repository.
 
 ## The pipeline
 
