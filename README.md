@@ -45,8 +45,10 @@ matters most. Only `.env` changes - no code edits needed.
 
 How to use it:
 
-1. Upload `Ticket Data (2).txt` in the sidebar - or `data/headerless_test.txt`
-   to see the automatic header detection in action.
+1. No upload needed - the bundled sample dataset loads automatically (the
+   sidebar's "Active data file" panel shows which file is in use, with a raw
+   download). Optionally upload your own `.txt`/`.csv` - try
+   `data/headerless_test.txt` to see the automatic header detection.
 2. The data-quality panel reports the 19 repaired shifted tickets; the metric
    row shows raw vs analyzed counts.
 3. **AI Summaries** tab: click *Generate summaries*, then pick a customer and
@@ -94,10 +96,13 @@ START -> load -> repair -> convert -> clean -> filter -> map_products -> summari
 
 ## The app
 
-- **Upload** (sidebar): raw `.txt` with or without header; clear errors for
-  invalid files; a data-quality panel lists repaired tickets.
+- **Data source** (sidebar): the bundled sample dataset loads automatically;
+  upload a `.txt` or `.csv` (with or without header line) to replace it. The
+  "Active data file" panel always shows which file is in use, with a raw
+  download. Invalid files get clear errors; a data-quality panel lists
+  repaired tickets.
 - **AI Summaries**: generate once, then browse by customer and product;
-  download all summaries as Markdown.
+  download all summaries as PDF or Markdown.
 - **Data**: converted and cleaned tables, CSV download.
 - **Insights**: an executive scorecard plus three business questions, every
   finding computed live from the filtered data:

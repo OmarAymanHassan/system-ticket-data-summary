@@ -14,3 +14,7 @@ wheels/
 
 # Notebook checkpoints
 .ipynb_checkpoints/
+
+# Local-only files, kept on disk but not part of the published repo
+/documentation.html
+Streamlit App for System Ticket Data Summary (2).docx

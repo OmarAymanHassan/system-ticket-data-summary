@@ -8,6 +8,7 @@ insights.
 Run with:  streamlit run app.py
 """
 import os
+from pathlib import Path
 
 import pandas as pd
 import plotly.express as px
@@ -15,6 +16,7 @@ import plotly.graph_objects as go
 import streamlit as st
 
 import pipeline as pl
+from fpdf import FPDF
 
 # Completion results containing these words mean the ticket left the cheap
 # remote path: a technician was involved or hardware was shipped/replaced.
@@ -28,10 +30,13 @@ st.title("System Ticket Data Summary")
 # --------------------------------------------------------------------- #
 # Sidebar: upload and config                                            #
 # --------------------------------------------------------------------- #
+DEFAULT_FILE = Path("Ticket Data (2).txt")
+
 with st.sidebar:
     st.header("1. Upload ticket data")
     uploaded = st.file_uploader("Raw ticket text file", type=["txt", "csv"])
-    st.caption("With or without the header line - both work.")
+    st.caption("With or without the header line - both work. "
+               "If you upload nothing, the bundled sample data is used.")
     st.divider()
     st.caption(f"Model: {os.getenv('GEMINI_MODEL', 'gemini-3.5-flash')}")
     if os.getenv("GOOGLE_API_KEY"):
@@ -39,9 +44,19 @@ with st.sidebar:
     else:
         st.error("GOOGLE_API_KEY missing in .env - summaries are disabled.")
 
-if uploaded is None:
+if uploaded is not None:
+    file_bytes, source_name, source_note = uploaded.getvalue(), uploaded.name, "uploaded by you"
+elif DEFAULT_FILE.exists():
+    file_bytes, source_name, source_note = (DEFAULT_FILE.read_bytes(), DEFAULT_FILE.name,
+                                            "bundled sample")
+else:
     st.info("Upload the raw ticket data text file in the sidebar to get started.")
     st.stop()
+
+with st.sidebar:
+    st.subheader("Active data file")
+    st.success(f"**{source_name}**\n\n{source_note} - {len(file_bytes):,} bytes")
+    st.download_button("View the raw file", file_bytes, source_name, "text/plain")
 
 
 # --------------------------------------------------------------------- #
@@ -58,8 +73,40 @@ def preprocess(file_bytes: bytes):
     return df_raw, df, repaired, paths, had_header
 
 
+def summaries_to_pdf(summaries: dict) -> bytes:
+    """Render the nested {customer: {product: text}} summaries as a PDF."""
+    pdf = FPDF()
+    pdf.set_auto_page_break(True, margin=18)
+    for cust, products in summaries.items():
+        for product, text in products.items():
+            pdf.add_page()
+            pdf.set_font("helvetica", "B", 15)
+            pdf.cell(0, 10, f"Customer {cust} - {product}",
+                     new_x="LMARGIN", new_y="NEXT")
+            pdf.ln(2)
+            # helvetica is latin-1 only; replace anything outside it
+            clean = str(text).encode("latin-1", "replace").decode("latin-1")
+            for line in clean.splitlines():
+                line = line.strip()
+                if not line:
+                    pdf.ln(2)
+                    continue
+                if line.startswith("#"):
+                    pdf.set_font("helvetica", "B", 12)
+                    pdf.multi_cell(0, 7, line.lstrip("# ").strip(),
+                                   new_x="LMARGIN", new_y="NEXT")
+                    pdf.set_font("helvetica", "", 11)
+                else:
+                    if line.startswith("* "):
+                        line = "- " + line[2:]
+                    pdf.set_font("helvetica", "", 11)
+                    pdf.multi_cell(0, 6, line, markdown=True,
+                                   new_x="LMARGIN", new_y="NEXT")
+    return bytes(pdf.output())
+
+
 try:
-    df_raw, df, repaired, paths, had_header = preprocess(uploaded.getvalue())
+    df_raw, df, repaired, paths, had_header = preprocess(file_bytes)
 except ValueError as err:
     st.error(f"The uploaded file is invalid: {err}")
     st.stop()
@@ -128,7 +175,7 @@ with tab_summary:
             graph = pl.build_pipeline(
                 on_progress=lambda p, n: status.write(f"Summarizing {p} ({n} tickets) ...")
             )
-            result = graph.invoke({"raw_source": uploaded.getvalue()})
+            result = graph.invoke({"raw_source": file_bytes})
             st.session_state["summaries"] = result["summaries"]
             status.update(label="Pipeline finished", state="complete", expanded=False)
 
@@ -137,7 +184,14 @@ with tab_summary:
         cust = s1.selectbox("Customer", list(summaries))
         product = s2.selectbox("Product", list(summaries[cust]))
         st.markdown(summaries[cust][product])
-        st.download_button(
+        dl1, dl2 = st.columns(2)
+        dl1.download_button(
+            "Download all summaries (PDF)",
+            summaries_to_pdf(summaries),
+            "ticket_summaries.pdf",
+            "application/pdf",
+        )
+        dl2.download_button(
             "Download all summaries (Markdown)",
             "\n\n---\n\n".join(
                 f"# Customer {c} - {p}\n\n{s}"

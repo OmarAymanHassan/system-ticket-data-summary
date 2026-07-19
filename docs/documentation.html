@@ -417,8 +417,11 @@ GEMINI_MODEL=gemma-4-31b-it</code></pre>
 
 <h3>7.3 Using the app</h3>
 <ol>
-<li><b>Upload</b> the raw ticket .txt in the sidebar - with or without the header line
-(a banner reports when the standard header was applied automatically).</li>
+<li><b>Data source</b>: the bundled sample dataset loads automatically - no upload
+needed. The sidebar's "Active data file" panel shows which file is in use (with a raw
+download for inspection). Optionally upload your own <code>.txt</code> or
+<code>.csv</code>, with or without the header line (a banner reports when the standard
+header was applied automatically).</li>
 <li><b>Preprocessing report</b>: a data-quality panel lists any repaired shifted tickets;
 the metric row shows raw count, filtered count, products and average resolution time. A
 clearly worded error appears instead if the file is invalid (wrong scheme, wrong file,
@@ -426,8 +429,8 @@ empty, broken rows).</li>
 <li><b>Data tab</b>: the converted table (with CSV download) and the cleaned,
 product-mapped table.</li>
 <li><b>AI Summaries tab</b>: click <i>Generate summaries</i>, watch per-group progress,
-then pick a <b>customer</b> and a <b>product</b> to read that story. <i>Download all
-summaries</i> exports the complete set as one Markdown file.</li>
+then pick a <b>customer</b> and a <b>product</b> to read that story. Download the
+complete set as a formatted <b>PDF</b> (one page per customer x product) or as Markdown.</li>
 <li><b>Insights tab</b>: an executive scorecard (repeat rate, first-contact resolution,
 escalation rate, resolution time, contacts per issue) followed by the business analysis
 (&sect;08), with product and customer filters - all findings recompute for the current
