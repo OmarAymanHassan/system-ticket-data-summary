@@ -90,9 +90,13 @@ START -> load -> repair -> convert -> clean -> filter -> map_products -> summari
    GIGA -> GIGA; VOD -> VOD; HDW kept as its own Hardware group.
 7. **Summarize** - per customer per product (18 summaries for the sample),
    five-section storytelling format (Initial Issue, Follow-ups, Developments,
-   Later Incidents, Recent Events), German tickets translated, no invented
-   facts (audited: zero invented or omitted ticket numbers), each LLM call
-   retried up to 3 times.
+   Later Incidents, Recent Events), German tickets translated. The output is
+   a validated contract, not free text: a Pydantic schema enforced natively
+   by the API (ticket references + narrative per section), every cited ticket
+   cross-checked against the data (invented or omitted references trigger a
+   corrective retry), and timeframes computed from the verified tickets'
+   real timestamps - a displayed date cannot be hallucinated. Every summary
+   carries a verification status shown in the app.
 
 ## The app
 
@@ -101,8 +105,10 @@ START -> load -> repair -> convert -> clean -> filter -> map_products -> summari
   "Active data file" panel always shows which file is in use, with a raw
   download. Invalid files get clear errors; a data-quality panel lists
   repaired tickets.
-- **AI Summaries**: generate once, then browse by customer and product;
-  download all summaries as PDF or Markdown.
+- **AI Summaries**: generate once, then browse by customer and product; every
+  summary shows its verification badge (verified / corrected after retry /
+  unverified) plus an aggregate reference-check line; download all summaries
+  as PDF or Markdown.
 - **Data**: converted and cleaned tables, CSV download.
 - **Insights**: an executive scorecard plus three business questions, every
   finding computed live from the filtered data:

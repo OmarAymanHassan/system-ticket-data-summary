@@ -74,11 +74,12 @@ def preprocess(file_bytes: bytes):
 
 
 def summaries_to_pdf(summaries: dict) -> bytes:
-    """Render the nested {customer: {product: text}} summaries as a PDF."""
+    """Render the nested {customer: {product: entry}} summaries as a PDF."""
     pdf = FPDF()
     pdf.set_auto_page_break(True, margin=18)
     for cust, products in summaries.items():
-        for product, text in products.items():
+        for product, entry in products.items():
+            text = entry["markdown"]
             pdf.add_page()
             pdf.set_font("helvetica", "B", 15)
             pdf.cell(0, 10, f"Customer {cust} - {product}",
@@ -180,10 +181,28 @@ with tab_summary:
             status.update(label="Pipeline finished", state="complete", expanded=False)
 
         summaries = st.session_state["summaries"]
+
+        total = sum(len(p) for p in summaries.values())
+        ok = sum(1 for p in summaries.values()
+                 for e in p.values() if e["status"] in ("verified", "corrected"))
+        st.caption(f"Reference check: {ok}/{total} summaries verified - every cited "
+                   "ticket exists in the data and no ticket was omitted.")
+
         s1, s2 = st.columns(2)
         cust = s1.selectbox("Customer", list(summaries))
         product = s2.selectbox("Product", list(summaries[cust]))
-        st.markdown(summaries[cust][product])
+        entry = summaries[cust][product]
+
+        if entry["status"] == "verified":
+            st.success("Verified: ticket references proven against the data on the first attempt.")
+        elif entry["status"] == "corrected":
+            st.info("Corrected: the model fixed its references after one corrective retry - now verified.")
+        elif entry["status"] == "unverified":
+            st.warning("Unverified: ticket references could not be fully verified - read with care.")
+        else:
+            st.error("Generation failed for this group - see the text below.")
+
+        st.markdown(entry["markdown"])
         dl1, dl2 = st.columns(2)
         dl1.download_button(
             "Download all summaries (PDF)",
@@ -194,9 +213,9 @@ with tab_summary:
         dl2.download_button(
             "Download all summaries (Markdown)",
             "\n\n---\n\n".join(
-                f"# Customer {c} - {p}\n\n{s}"
+                f"# Customer {c} - {p}\n\n{e['markdown']}"
                 for c, products in summaries.items()
-                for p, s in products.items()
+                for p, e in products.items()
             ).encode("utf-8"),
             "ticket_summaries.md",
         )

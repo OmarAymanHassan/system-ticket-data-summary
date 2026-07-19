@@ -12,20 +12,34 @@ Shared by the Streamlit app (app.py). Rules baked in:
 """
 import csv
 import io
+import logging
 import os
 import re
+import sys
+import time
 from pathlib import Path
 from typing import Optional
 
 import pandas as pd
 from dotenv import load_dotenv
-from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langgraph.graph import END, START, StateGraph
+from pydantic import BaseModel, field_validator
 from typing_extensions import TypedDict
 
 load_dotenv()
+
+# Timestamped progress log: every pipeline stage reports, so a running app or
+# notebook always shows where it is. stdout (not stderr) so notebooks render
+# it as normal output.
+log = logging.getLogger("ticket_pipeline")
+if not log.handlers:
+    _h = logging.StreamHandler(sys.stdout)
+    _h.setFormatter(logging.Formatter("%(asctime)s | %(message)s", "%H:%M:%S"))
+    log.addHandler(_h)
+    log.setLevel(logging.INFO)
+    log.propagate = False
 
 DATA_DIR = Path("data")
 
@@ -69,28 +83,58 @@ EXPECTED_COLUMNS = EXPECTED_HEADER.split(",")
 # A real ticket row starts with an order number like 001-0671177/24
 ORDER_NUMBER_PATTERN = re.compile(r"\d{3}-\d+/\d{2}")
 
+# --------------------------------------------------------------------------- #
+# Output contract: the LLM must fill this schema - shape is enforced natively  #
+# by the API (response_schema), semantics by the validators and evaluate_story #
+# --------------------------------------------------------------------------- #
+class Section(BaseModel):
+    """One phase of the story. No timeframe field on purpose: timeframes are
+    computed from the data after the cited tickets are verified, so the model
+    cannot hallucinate a displayed date."""
+    ticket_numbers: list[str] = []      # [] = this phase covers no tickets
+    narrative: str
+
+    @field_validator("ticket_numbers")
+    @classmethod
+    def order_number_format(cls, v):
+        for t in v:
+            if not ORDER_NUMBER_PATTERN.fullmatch(t):
+                raise ValueError(
+                    f"'{t}' is not a valid order number; sections without "
+                    "tickets must use an empty list"
+                )
+        return v
+
+
+class StorySummary(BaseModel):
+    initial_issue: Section
+    follow_ups: Section
+    developments: Section
+    later_incidents: Section
+    recent_events: Section
+
+
+SECTION_TITLES = [
+    ("initial_issue", "Initial Issue"),
+    ("follow_ups", "Follow-ups"),
+    ("developments", "Developments"),
+    ("later_incidents", "Later Incidents"),
+    ("recent_events", "Recent Events"),
+]
+
 STORY_PROMPT = ChatPromptTemplate.from_template("""\
-You are a telecom customer-service analyst. Write a storytelling summary of the
-support-ticket history of customer **{customer}** for the product **{product}**
-(service categories: {categories}).
-
-Structure the summary into exactly these five sections:
-1. **Initial Issue**
-2. **Follow-ups**
-3. **Developments**
-4. **Later Incidents**
-5. **Recent Events**
-
-For every section provide:
-- **Timeframe:** the period covered
-- **Ticket Numbers:** the relevant order numbers
-- **Narrative:** what happened - the nature of the issues, the customer's feedback, actions taken by support, and outcomes.
+You are a telecom customer-service analyst. Summarize the support-ticket history
+of customer **{customer}** for the product **{product}** (service categories:
+{categories}) into the five-phase storytelling structure: initial_issue,
+follow_ups, developments, later_incidents, recent_events.
 
 Rules:
-- Use ONLY the ticket data below; never invent facts.
-- Keep events chronological and split the timeline sensibly across the five sections.
-- If there are few tickets (even a single one), still produce all five sections but keep them very brief.
-- Some tickets are in German - translate everything and write the whole summary in English.
+- Use ONLY the ticket data below; never invent facts or ticket numbers.
+- Keep events chronological across the phases.
+- Every ticket below must appear in exactly one phase's ticket_numbers.
+- Phases with no tickets: ticket_numbers = [] and a one-line narrative such as
+  "No further tickets recorded in this period."
+- Some tickets are in German - write every narrative in English.
 
 Tickets (chronological):
 {tickets}
@@ -154,6 +198,8 @@ def load_raw_tickets(source):
             f"but got (line, fields): {bad}"
         )
 
+    log.info(f"load: {len(data)} tickets, header "
+             f"{'present' if had_header else 'applied automatically'}")
     return header, data, had_header
 
 
@@ -178,7 +224,7 @@ def repair_shifted_rows(rows: list, header: list) -> list:
             r.pop()                     # drop the padding beyond the last column
             repaired.append(r[0])
 
-    print(f"Repaired {len(repaired)} shifted tickets: {repaired}")
+    log.info(f"repair: {len(repaired)} shifted tickets fixed: {repaired}")
     return rows
 
 
@@ -192,6 +238,7 @@ def convert_and_save(df: pd.DataFrame, out_dir: Path = DATA_DIR) -> dict:
     xlsx_path = out_dir / "tickets_converted.xlsx"
     df.to_csv(csv_path, index=False)
     df.to_excel(xlsx_path, index=False)
+    log.info(f"convert: saved {csv_path} and {xlsx_path}")
     return {"csv": csv_path, "xlsx": xlsx_path}
 
 
@@ -214,7 +261,8 @@ def clean_tickets(df: pd.DataFrame) -> pd.DataFrame:
     empty_cols = out.columns[out.isna().all()]
     if len(empty_cols):
         out = out.drop(columns=empty_cols)
-        print(f"Dropped {len(empty_cols)} all-empty columns: {list(empty_cols)}")
+        log.info(f"clean: dropped {len(empty_cols)} all-empty columns: {list(empty_cols)}")
+    log.info(f"clean: {len(out)} tickets, {out.shape[1]} columns")
     return out
 
 
@@ -224,7 +272,10 @@ def clean_tickets(df: pd.DataFrame) -> pd.DataFrame:
 def filter_categories(df: pd.DataFrame) -> pd.DataFrame:
     """Keep only tickets in ALLOWED_CATEGORIES, sorted chronologically."""
     out = df[df["SERVICE_CATEGORY"].isin(ALLOWED_CATEGORIES)].copy()
-    return out.sort_values("ACCEPTANCE_TIME").reset_index(drop=True)
+    out = out.sort_values("ACCEPTANCE_TIME").reset_index(drop=True)
+    log.info(f"filter: kept {len(out)} of {len(df)} tickets "
+             f"(categories: {ALLOWED_CATEGORIES})")
+    return out
 
 
 # --------------------------------------------------------------------------- #
@@ -234,6 +285,8 @@ def map_products(df: pd.DataFrame) -> pd.DataFrame:
     """Add a PRODUCT column derived from SERVICE_CATEGORY."""
     out = df.copy()
     out["PRODUCT"] = out["SERVICE_CATEGORY"].map(CATEGORY_TO_PRODUCT)
+    log.info(f"map_products: {out['PRODUCT'].nunique()} products for "
+             f"{out['CUSTOMER_NUMBER'].nunique()} customers")
     return out
 
 
@@ -270,28 +323,119 @@ def get_llm() -> ChatGoogleGenerativeAI:
             "(get one at https://aistudio.google.com/apikey)."
         )
     model = os.getenv("GEMINI_MODEL", "gemini-3.5-flash")
-    return ChatGoogleGenerativeAI(model=model, temperature=0.3)
+    # timeout: a stalled connection must raise (so with_retry can act),
+    # never hang forever - a call cannot be retried while it never returns.
+    return ChatGoogleGenerativeAI(model=model, temperature=0.3, timeout=90)
+
+
+def evaluate_story(story: StorySummary, group: pd.DataFrame) -> list[str]:
+    """The two checklists. Empty list = every reference is real and complete."""
+    cited = set()
+    for field, _ in SECTION_TITLES:
+        cited |= set(getattr(story, field).ticket_numbers)
+    actual = set(group["ORDER_NUMBER"])
+
+    problems = []
+    if cited - actual:
+        problems.append(f"cited tickets that do not exist in this data: {sorted(cited - actual)}")
+    if actual - cited:
+        problems.append(f"never mentioned these real tickets: {sorted(actual - cited)}")
+    return problems
+
+
+def section_timeframe(section: Section, group: pd.DataFrame) -> str:
+    """Computed from the data, never generated - a displayed date cannot be
+    hallucinated because the model never authors it."""
+    if not section.ticket_numbers:
+        return "No tickets recorded in this period"
+    dates = group.loc[group["ORDER_NUMBER"].isin(section.ticket_numbers), "ACCEPTANCE_TIME"]
+    if dates.min().date() == dates.max().date():
+        return f"{dates.min():%b %d, %Y}"
+    return f"{dates.min():%b %d} - {dates.max():%b %d, %Y}"
+
+
+def render_story(story: StorySummary, group: pd.DataFrame) -> str:
+    """Validated object -> the five-section Markdown. Presentation is our code:
+    uniform wording, data-derived timeframes."""
+    parts = []
+    for i, (field, title) in enumerate(SECTION_TITLES, 1):
+        s = getattr(story, field)
+        tickets = ", ".join(s.ticket_numbers) if s.ticket_numbers else "None"
+        parts.append(
+            f"### {i}. **{title}**\n"
+            f"- **Timeframe:** {section_timeframe(s, group)}\n"
+            f"- **Ticket Numbers:** {tickets}\n"
+            f"- **Narrative:** {s.narrative}"
+        )
+    return "\n\n".join(parts)
+
+
+def summarize_group(group: pd.DataFrame, structured_llm, customer: str,
+                    product: str, max_retries: int = 2):
+    """Generate -> evaluate -> corrective retries. Returns (story, status).
+
+    status: 'verified'   - references proven on the first attempt
+            'corrected'  - proven after a corrective retry
+            'unverified' - retries exhausted; last answer returned as-is
+    """
+    base_prompt = STORY_PROMPT.format(
+        customer=customer,
+        product=product,
+        categories=", ".join(sorted(group["SERVICE_CATEGORY"].unique())),
+        tickets=format_tickets(group),
+    )
+    prompt, story = base_prompt, None
+    for attempt in range(max_retries + 1):
+        try:
+            story = structured_llm.invoke(prompt)
+            problems = evaluate_story(story, group)
+        except Exception as err:            # schema/validation failure of the raw output
+            problems = [f"the output did not match the required schema: {err}"]
+        if story is not None and not problems:
+            return story, ("verified" if attempt == 0 else "corrected")
+        actual = ", ".join(sorted(group["ORDER_NUMBER"]))
+        prompt = (
+            base_prompt
+            + "\n\nCorrection needed - your previous answer had these problems:\n"
+            + "\n".join(f"- {p}" for p in problems)
+            + f"\nRegenerate, citing exactly these tickets across the phases: {actual}."
+        )
+    if story is None:
+        raise RuntimeError(f"no valid output after {max_retries + 1} attempts")
+    return story, "unverified"
 
 
 def summarize_products(df: pd.DataFrame, llm=None, on_progress=None) -> dict:
-    """Generate the 5-section storytelling summary per customer per product.
+    """Validated storytelling summaries per customer x product.
 
-    Returns {customer: {product: summary_text}}.
+    Returns {customer: {product: {"markdown": str, "status": str, "story": dict}}}.
     """
     # with_retry: the Gemini endpoint intermittently drops connections; retry
-    # each summary call up to 3 times instead of failing the whole run.
-    chain = (STORY_PROMPT | (llm or get_llm()) | StrOutputParser()).with_retry(
-        stop_after_attempt=3)
+    # each call up to 3 times instead of failing the whole run.
+    structured_llm = (llm or get_llm()).with_structured_output(
+        StorySummary, method="json_schema"
+    ).with_retry(stop_after_attempt=3)
+
+    groups = list(df.groupby(["CUSTOMER_NUMBER", "PRODUCT"]))
+    log.info(f"summarize: {len(groups)} customer x product groups to generate")
     summaries = {}
-    for (cust, product), group in df.groupby(["CUSTOMER_NUMBER", "PRODUCT"]):
+    for idx, ((cust, product), group) in enumerate(groups, 1):
         if on_progress:
             on_progress(f"customer {cust} - {product}", len(group))
-        summaries.setdefault(cust, {})[product] = chain.invoke({
-            "customer": cust,
-            "product": product,
-            "categories": ", ".join(sorted(group["SERVICE_CATEGORY"].unique())),
-            "tickets": format_tickets(group),
-        })
+        log.info(f"summarize [{idx}/{len(groups)}]: customer {cust} - {product} "
+                 f"({len(group)} tickets) ...")
+        started = time.time()
+        try:
+            story, status = summarize_group(group, structured_llm, cust, product)
+            entry = {"markdown": render_story(story, group), "status": status,
+                     "story": story.model_dump()}
+        except Exception as err:
+            entry = {"markdown": f"Generation failed: {err}", "status": "failed",
+                     "story": None}
+        log.info(f"summarize [{idx}/{len(groups)}]: -> {entry['status']} "
+                 f"in {time.time() - started:.1f}s")
+        summaries.setdefault(cust, {})[product] = entry
+    log.info("summarize: done")
     return summaries
 
 
