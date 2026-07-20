@@ -130,9 +130,10 @@ START -> load -> repair -> convert -> clean -> filter -> map_products -> summari
 - **44% of tickets are one device** (the cable router), across all three
   customers in two weeks - prevention (firmware push, batch swap,
   self-service reset) attacks half the queue at once.
-- **Repeated remote fixes never held**: hold times of 2-25 hours, and 100%
-  of repeat chains ended in a device replacement or technician anyway -
-  supporting an escalate-on-second-contact rule.
+- **Repeated remote fixes never held**: hold times of 2-25 hours, and 5 of 6
+  repeat chains - including all three router chains - ended in a device
+  replacement or technician visit anyway (the sixth resolved as a forgotten
+  PIN) - supporting an escalate-on-second-contact rule.
 - **First-contact resolution is 67% overall but 0% for Hardware** - four
   products are perfect, one device destroys the KPI.
 - **Every customer is a repeat caller** (10-11 contacts each in two weeks) -
