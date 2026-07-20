@@ -3,236 +3,355 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>System Ticket Data Summary - Technical Documentation</title>
+<title>System Ticket Data Summary - Technical Dossier</title>
 <style>
   :root {
-    --ink: #0D2436;
-    --ink-2: #1B4965;
-    --teal: #0F7490;
-    --teal-soft: #E4F0F3;
-    --teal-bright: #3EC5DE;
-    --amber: #B25E09;
-    --amber-soft: #FAF1E3;
-    --green: #217A42;
-    --green-soft: #EBF5EE;
-    --paper: #FFFFFF;
-    --backdrop: #E9EDF0;
-    --line: #D4DDE3;
-    --muted: #5A6E7E;
-    --code-bg: #102437;
-    --code-fg: #D6E6F2;
-    --code-cm: #7C9FB8;
+    --ink: #0A1622;          /* deep ink ground */
+    --ink-2: #10222F;
+    --ink-3: #16303F;
+    --paper: #FBFCFC;
+    --backdrop: #E4E9EC;
+    --body: #1C2B36;
+    --muted: #5D7182;
+    --line: #D3DCE1;
+    --line-dark: rgba(23,195,169,.28);
+    --signal: #17C3A9;       /* the one accent */
+    --signal-deep: #0E8A78;
+    --signal-soft: #E2F5F1;
+    --amber: #B57722;
+    --amber-soft: #FBF2E2;
+    --red: #C24C51;
+    --mono: "Cascadia Code", Consolas, "Courier New", monospace;
+    --sans: "Segoe UI Variable Display", "Segoe UI", -apple-system, Arial, sans-serif;
   }
   * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   html, body { margin: 0; padding: 0; }
-  body { font-family: "Segoe UI", -apple-system, "Helvetica Neue", Arial, sans-serif;
-         color: var(--ink); font-size: 10.5pt; line-height: 1.6; background: var(--backdrop); }
+  body { font-family: var(--sans); color: var(--body); font-size: 10.3pt;
+         line-height: 1.62; background: var(--backdrop); }
 
-  /* ================= COVER ================= */
-  .cover { background: linear-gradient(160deg, #0D2436 0%, #123048 55%, #14405C 100%);
-           color: #E9F2F8; display: flex; flex-direction: column; }
-  .cover-inner { width: 100%; max-width: 176mm; margin: auto; padding: 26mm 0 16mm; display: flex; flex-direction: column; flex: 1; }
-  .kicker { font-size: 8.5pt; letter-spacing: 4px; text-transform: uppercase; color: var(--teal-bright); font-weight: 600; }
-  .cover h1 { font-size: 33pt; line-height: 1.1; margin: 9mm 0 5mm; font-weight: 700; letter-spacing: -0.5px; color: #FFFFFF; }
-  .cover h1 .thin { display: block; font-weight: 300; font-size: 20pt; color: #A9C4D6; letter-spacing: 0; margin-top: 2mm; }
-  .cover .sub { font-size: 11.5pt; font-weight: 300; color: #C4D7E4; max-width: 140mm; line-height: 1.7; }
-  .pipe { display: flex; align-items: center; flex-wrap: nowrap; gap: 4px; margin: 12mm 0 0; overflow-x: auto; }
-  .pipe .node { font-family: "Cascadia Code", Consolas, monospace; font-size: 7.6pt; color: #DFF5FA;
-                border: 1px solid rgba(62,197,222,.55); border-radius: 20px; padding: 3px 9px;
-                background: rgba(62,197,222,.10); white-space: nowrap; }
-  .pipe .node.hot { background: var(--teal-bright); color: #06222E; border-color: var(--teal-bright); font-weight: 600; }
-  .pipe .sep { width: 9px; height: 1px; background: rgba(62,197,222,.55); position: relative; flex-shrink: 0; }
-  .pipe .sep::after { content: ""; position: absolute; right: 0; top: -2px;
-                      border: solid rgba(62,197,222,.8); border-width: 0 1px 1px 0; padding: 2px; transform: rotate(-45deg); }
-  .stats { display: grid; grid-template-columns: repeat(4, 1fr); margin-top: auto; padding-top: 9mm;
-           border-top: 1px solid rgba(169,196,214,.3); }
-  .stat { padding-right: 8mm; }
-  .stat + .stat { border-left: 1px solid rgba(169,196,214,.22); padding-left: 8mm; }
-  .stat .n { font-size: 27pt; font-weight: 200; color: var(--teal-bright); font-variant-numeric: tabular-nums; line-height: 1; }
-  .stat .l { font-size: 8pt; color: #9FB9CB; margin-top: 2.5mm; line-height: 1.5; }
-  .cover .meta { margin-top: 11mm; display: flex; justify-content: space-between; align-items: baseline;
-                 font-size: 8.5pt; color: #8FA9BC; flex-wrap: wrap; gap: 6px; }
-  .stack span { border: 1px solid rgba(143,169,188,.45); border-radius: 20px; padding: 2px 9px; margin-left: 5px; font-size: 8pt; }
+  /* ============================ COVER ============================ */
+  .cover { position: relative; background: var(--ink); color: #DCE9EE; overflow: hidden;
+           display: flex; flex-direction: column; }
+  .cover::before { content: ""; position: absolute; inset: 0; opacity: .5;
+    background-image: linear-gradient(rgba(23,195,169,.05) 1px, transparent 1px),
+                      linear-gradient(90deg, rgba(23,195,169,.05) 1px, transparent 1px);
+    background-size: 26px 26px; }
+  .cover::after { content: ""; position: absolute; top: 0; bottom: 0; left: 15mm;
+    width: 1px; background: linear-gradient(180deg, transparent, var(--signal) 18%,
+    var(--signal) 82%, transparent); opacity: .6; }
+  .cover-inner { position: relative; width: 100%; max-width: 176mm; margin: auto;
+                 padding: 24mm 0 14mm; display: flex; flex-direction: column; flex: 1; z-index: 1; }
+  .cv-top { display: flex; justify-content: space-between; align-items: baseline;
+            font-family: var(--mono); font-size: 7.6pt; letter-spacing: 2.5px;
+            text-transform: uppercase; color: #7FA3AE; }
+  .cv-top b { color: var(--signal); font-weight: 600; }
+  .cover h1 { font-size: 37pt; line-height: 1.04; margin: 12mm 0 0; font-weight: 800;
+              letter-spacing: -1px; color: #FFFFFF; }
+  .cover h1 em { display: block; font-style: normal; font-weight: 200; font-size: 21pt;
+                 letter-spacing: 0; color: #8FB4BE; margin-top: 2.5mm; }
+  .cover .sub { font-size: 11pt; font-weight: 300; color: #B9CFD7; max-width: 150mm;
+                line-height: 1.75; margin-top: 7mm; }
+  .cover .sub b { color: #E9F5F3; font-weight: 600; }
 
-  /* ================= SHEET / CONTENT ================= */
-  .sheet { background: var(--paper); max-width: 210mm; margin: 0 auto; padding: 16mm 17mm 20mm; }
-  h2 { font-size: 16pt; font-weight: 700; letter-spacing: -0.3px; color: var(--ink);
-       margin: 34px 0 4px; padding-top: 18px; border-top: 1px solid var(--line);
-       display: flex; align-items: baseline; gap: 12px; page-break-after: avoid; }
-  h2:first-of-type { border-top: none; margin-top: 10px; padding-top: 0; }
-  h2 .num { font-family: "Cascadia Code", Consolas, monospace; font-size: 10pt; font-weight: 600;
-            color: #FFFFFF; background: var(--teal); border-radius: 4px; padding: 2px 7px; transform: translateY(-2px); }
-  h3 { font-size: 11.5pt; color: var(--ink-2); margin: 20px 0 6px; page-break-after: avoid; }
+  .flow { display: flex; align-items: center; flex-wrap: nowrap; gap: 0; margin-top: 11mm;
+          font-family: var(--mono); overflow-x: auto; }
+  .flow .n { font-size: 7.8pt; color: #CFEDE7; border: 1px solid var(--line-dark);
+             padding: 4px 10px; border-radius: 3px; white-space: nowrap;
+             background: rgba(23,195,169,.06); }
+  .flow .n.hot { background: var(--signal); color: #05231D; font-weight: 700;
+                 border-color: var(--signal); }
+  .flow .w { flex: 0 0 14px; height: 1px; background: var(--line-dark); position: relative; }
+  .flow .w::after { content: ""; position: absolute; right: -1px; top: -2.5px;
+     border-top: 3px solid transparent; border-bottom: 3px solid transparent;
+     border-left: 5px solid rgba(23,195,169,.7); }
+
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); margin-top: auto;
+           padding-top: 8mm; border-top: 1px solid rgba(127,163,174,.25); }
+  .stat { padding: 0 7mm 0 0; }
+  .stat + .stat { border-left: 1px solid rgba(127,163,174,.18); padding-left: 7mm; }
+  .stat .n { font-family: var(--mono); font-size: 25pt; font-weight: 350; color: var(--signal);
+             line-height: 1; font-variant-numeric: tabular-nums; }
+  .stat .n small { font-size: 12pt; color: #6FA8A0; }
+  .stat .l { font-size: 7.6pt; color: #8FA9B4; margin-top: 2.5mm; line-height: 1.55; }
+  .cv-meta { margin-top: 10mm; display: flex; justify-content: space-between;
+             align-items: center; flex-wrap: wrap; gap: 5px;
+             font-family: var(--mono); font-size: 7.4pt; color: #7B96A1; }
+  .chips span { border: 1px solid rgba(127,163,174,.4); border-radius: 3px;
+                padding: 2.5px 8px; margin-left: 4px; }
+
+  /* ============================ SHEET ============================ */
+  .sheet { background: var(--paper); max-width: 210mm; margin: 0 auto; padding: 13mm 16mm 20mm; }
+
+  /* section opener: the log strip */
+  .strip { background: var(--ink); color: #E7F2F0; border-radius: 6px;
+           padding: 11px 16px; margin: 34px 0 14px; display: flex; align-items: baseline;
+           gap: 14px; page-break-after: avoid; position: relative; overflow: hidden; }
+  .strip::after { content: ""; position: absolute; right: 0; top: 0; bottom: 0; width: 34%;
+    background-image: linear-gradient(90deg, rgba(23,195,169,.12) 1px, transparent 1px);
+    background-size: 9px 100%; }
+  .strip .no { font-family: var(--mono); color: var(--signal); font-size: 9.5pt;
+               font-weight: 600; letter-spacing: 1px; }
+  .strip h2 { font-size: 14.5pt; font-weight: 800; letter-spacing: -0.2px; margin: 0;
+              color: #FFFFFF; }
+  .strip .tagline { margin-left: auto; font-family: var(--mono); font-size: 7pt;
+                    letter-spacing: 2px; text-transform: uppercase; color: #7FA3AE;
+                    position: relative; z-index: 1; }
+
+  h3 { font-size: 11.3pt; color: var(--ink-3); margin: 20px 0 6px; font-weight: 700;
+       page-break-after: avoid; }
+  h3 .k { font-family: var(--mono); color: var(--signal-deep); font-size: 9pt;
+          font-weight: 600; margin-right: 6px; }
   p { margin: 6px 0; }
-  .lede { color: var(--muted); }
-  b { color: var(--ink); }
-  code { font-family: "Cascadia Code", Consolas, monospace; font-size: 9pt;
-         background: var(--teal-soft); color: var(--ink-2); padding: 1px 5px; border-radius: 4px; }
-  pre { background: var(--code-bg); border-radius: 8px; padding: 12px 15px; overflow-x: auto;
-        page-break-inside: avoid; margin: 10px 0; }
-  pre code { background: none; color: var(--code-fg); padding: 0; font-size: 8.6pt; line-height: 1.55; }
-  pre .c { color: var(--code-cm); }
-  table { border-collapse: collapse; width: 100%; margin: 10px 0 14px; page-break-inside: avoid;
-          font-size: 9.5pt; font-variant-numeric: tabular-nums; }
-  th { color: var(--teal); font-weight: 700; text-align: left; padding: 7px 10px;
-       font-size: 8.3pt; text-transform: uppercase; letter-spacing: 1.2px;
-       border-bottom: 2px solid var(--teal); background: none; }
-  td { border-bottom: 1px solid var(--line); padding: 7px 10px; vertical-align: top; }
+  b { color: var(--ink-2); }
+  .lede { color: var(--muted); font-size: 10.6pt; }
+
+  code { font-family: var(--mono); font-size: 8.8pt; background: var(--signal-soft);
+         color: var(--ink-3); padding: 1px 5px; border-radius: 3px; }
+  pre { background: var(--ink); border-radius: 7px; padding: 12px 15px; overflow-x: auto;
+        page-break-inside: avoid; margin: 10px 0; border-left: 3px solid var(--signal); }
+  pre code { background: none; color: #CFE3E9; padding: 0; font-size: 8.4pt; line-height: 1.6; }
+  pre .c { color: #628BA0; }
+  pre .g { color: #57D7C0; }
+
+  table { border-collapse: collapse; width: 100%; margin: 10px 0 14px;
+          page-break-inside: avoid; font-size: 9.3pt; font-variant-numeric: tabular-nums; }
+  th { font-family: var(--mono); color: var(--signal-deep); font-weight: 600;
+       text-align: left; padding: 6px 10px; font-size: 7.4pt; text-transform: uppercase;
+       letter-spacing: 1.6px; border-bottom: 2px solid var(--signal); }
+  td { border-bottom: 1px solid var(--line); padding: 6px 10px; vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
   ul, ol { margin: 6px 0; padding-left: 22px; }
   li { margin-bottom: 4px; }
-  li::marker { color: var(--teal); font-weight: 600; }
+  li::marker { color: var(--signal-deep); font-weight: 700; }
 
-  .callout { border-radius: 8px; padding: 11px 15px 12px; margin: 12px 0; page-break-inside: avoid; }
-  .callout .tag { display: block; font-size: 7.6pt; font-weight: 700; letter-spacing: 2.2px;
-                  text-transform: uppercase; margin-bottom: 4px; }
-  .finding { background: var(--green-soft); }  .finding .tag { color: var(--green); }
+  .callout { border-radius: 7px; padding: 11px 15px 12px; margin: 12px 0;
+             page-break-inside: avoid; }
+  .callout .tag { display: block; font-family: var(--mono); font-size: 7pt; font-weight: 700;
+                  letter-spacing: 2.4px; text-transform: uppercase; margin-bottom: 4px; }
+  .finding { background: var(--signal-soft); } .finding .tag { color: var(--signal-deep); }
   .caveat  { background: var(--amber-soft); }  .caveat .tag { color: var(--amber); }
-  .rule    { background: var(--teal-soft); }   .rule .tag { color: var(--teal); }
+  .rule    { background: #EDF2F5; }            .rule .tag { color: var(--ink-3); }
 
-  .toc { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 34px; margin: 12px 0 6px; }
-  .toc a { display: flex; gap: 10px; align-items: baseline; color: var(--ink); text-decoration: none;
-           padding: 5px 2px; border-bottom: 1px dotted var(--line); font-size: 10pt; }
-  .toc .tn { font-family: "Cascadia Code", Consolas, monospace; color: var(--teal); font-size: 9pt; font-weight: 600; }
+  /* TOC */
+  .toc { display: grid; grid-template-columns: 1fr 1fr; gap: 3px 30px; margin: 12px 0 4px; }
+  .toc a { display: flex; gap: 10px; align-items: baseline; color: var(--body);
+           text-decoration: none; padding: 5.5px 2px; border-bottom: 1px dotted var(--line);
+           font-size: 9.8pt; }
+  .toc a:hover { color: var(--signal-deep); }
+  .toc .tn { font-family: var(--mono); color: var(--signal-deep); font-size: 8.6pt;
+             font-weight: 600; }
+  .toc .dots { margin-left: auto; font-family: var(--mono); font-size: 7pt; color: #B4C3CC; }
 
-  .pipe-light { display: flex; align-items: center; flex-wrap: nowrap; gap: 4px; margin: 12px 0; overflow-x: auto; }
-  .pipe-light .node { font-family: "Cascadia Code", Consolas, monospace; font-size: 7.8pt; color: var(--ink-2);
-                      border: 1px solid var(--teal); border-radius: 20px; padding: 3px 8px; background: var(--teal-soft); white-space: nowrap; }
-  .pipe-light .sep { width: 9px; height: 1px; background: var(--teal); position: relative; opacity: .55; flex-shrink: 0; }
-  .pipe-light .sep::after { content: ""; position: absolute; right: 0; top: -2px;
-                            border: solid var(--teal); border-width: 0 1px 1px 0; padding: 2px; transform: rotate(-45deg); }
+  /* pipeline (light) */
+  .flow-l { display: flex; align-items: center; flex-wrap: nowrap; gap: 0; margin: 12px 0;
+            font-family: var(--mono); overflow-x: auto; }
+  .flow-l .n { font-size: 7.8pt; color: var(--ink-3); border: 1px solid var(--signal);
+               padding: 3.5px 9px; border-radius: 3px; background: var(--signal-soft);
+               white-space: nowrap; }
+  .flow-l .n.hot { background: var(--signal); color: #05231D; font-weight: 700; }
+  .flow-l .w { flex: 0 0 13px; height: 1px; background: var(--signal); opacity: .5;
+               position: relative; }
+  .flow-l .w::after { content: ""; position: absolute; right: -1px; top: -2.5px;
+     border-top: 3px solid transparent; border-bottom: 3px solid transparent;
+     border-left: 5px solid var(--signal); }
 
-  .insight { display: flex; gap: 16px; border: 1px solid var(--line); border-radius: 10px;
-             padding: 14px 16px; margin: 10px 0; page-break-inside: avoid; align-items: flex-start; }
-  .insight .big { font-size: 30pt; font-weight: 200; color: var(--teal); line-height: .95;
-                  font-variant-numeric: tabular-nums; width: 105px; text-align: left; flex-shrink: 0; }
-  .insight .big small { font-size: 13pt; font-weight: 400; }
-  .insight .big .u { display: block; font-size: 7.3pt; font-weight: 600; color: var(--muted);
-                     letter-spacing: 1.2px; text-transform: uppercase; margin-top: 4px; line-height: 1.35; }
-  .insight .tag { font-size: 7.6pt; font-weight: 700; letter-spacing: 2.2px; text-transform: uppercase; color: var(--teal); }
-  .insight .head { font-size: 11.5pt; font-weight: 700; color: var(--ink); margin: 2px 0 4px; }
-  .insight p { margin: 3px 0; font-size: 9.6pt; }
-  .insight .act { margin-top: 7px; font-size: 9.2pt; background: var(--green-soft); color: var(--green);
-                  border-radius: 5px; padding: 5px 10px; font-weight: 600; }
-  .caveat-strip { display: flex; gap: 12px; align-items: baseline; background: var(--amber-soft);
-                  border-radius: 8px; padding: 9px 14px; margin: 12px 0; font-size: 9.2pt; page-break-inside: avoid; }
-  .caveat-strip .tag { font-size: 7.6pt; font-weight: 700; letter-spacing: 2.2px; text-transform: uppercase;
-                       color: var(--amber); white-space: nowrap; }
+  /* KPI band */
+  .kpis { background: var(--ink); border-radius: 8px; padding: 14px 6px; margin: 14px 0;
+          display: grid; grid-template-columns: repeat(5, 1fr); page-break-inside: avoid; }
+  .kpi { text-align: center; padding: 0 8px; }
+  .kpi + .kpi { border-left: 1px solid rgba(127,163,174,.2); }
+  .kpi .v { font-family: var(--mono); font-size: 17.5pt; font-weight: 350; color: var(--signal);
+            font-variant-numeric: tabular-nums; line-height: 1.05; }
+  .kpi .v small { font-size: 9pt; color: #6FA8A0; }
+  .kpi .k { font-size: 7pt; letter-spacing: 1.6px; text-transform: uppercase;
+            color: #8FA9B4; margin-top: 4px; font-family: var(--mono); }
 
+  /* question cards */
   .qgrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 12px 0; }
-  .qcard { border: 1px solid var(--line); border-radius: 8px; padding: 11px 13px; page-break-inside: avoid; }
-  .qcard .qn { font-size: 16pt; font-weight: 200; color: var(--teal); line-height: 1; }
-  .qcard .qt { font-weight: 700; font-size: 9.6pt; margin: 5px 0 3px; }
-  .qcard .qd { font-size: 8.6pt; color: var(--muted); line-height: 1.5; }
+  .qcard { border: 1px solid var(--line); border-top: 3px solid var(--signal);
+           border-radius: 7px; padding: 11px 13px; page-break-inside: avoid; }
+  .qcard .qn { font-family: var(--mono); font-size: 14pt; font-weight: 350;
+               color: var(--signal-deep); line-height: 1; }
+  .qcard .qt { font-weight: 800; font-size: 9.7pt; margin: 6px 0 3px; color: var(--ink-2); }
+  .qcard .qd { font-size: 8.5pt; color: var(--muted); line-height: 1.55; }
 
-  /* ================= SCREEN vs PRINT ================= */
+  /* insight cards */
+  .insight { display: flex; gap: 16px; border: 1px solid var(--line); border-radius: 8px;
+             padding: 14px 16px; margin: 10px 0; page-break-inside: avoid;
+             align-items: flex-start; }
+  .insight .big { font-family: var(--mono); font-size: 26pt; font-weight: 350;
+                  color: var(--signal-deep); line-height: .95; width: 105px;
+                  flex-shrink: 0; font-variant-numeric: tabular-nums; }
+  .insight .big small { font-size: 12pt; }
+  .insight .big .u { display: block; font-family: var(--mono); font-size: 6.7pt;
+                     font-weight: 600; color: var(--muted); letter-spacing: 1.4px;
+                     text-transform: uppercase; margin-top: 5px; line-height: 1.4; }
+  .insight .tag { font-family: var(--mono); font-size: 7pt; font-weight: 700;
+                  letter-spacing: 2.4px; text-transform: uppercase; color: var(--signal-deep); }
+  .insight .head { font-size: 11.3pt; font-weight: 800; color: var(--ink-2); margin: 2px 0 4px; }
+  .insight p { font-size: 9.4pt; }
+  .insight .act { background: var(--signal-soft); border-radius: 5px; padding: 7px 11px;
+                  font-size: 8.8pt; margin-top: 7px; color: var(--ink-3); }
+  .insight .act b { color: var(--signal-deep); }
+
+  /* chain timeline figure */
+  .fig { border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px 10px;
+         margin: 12px 0; page-break-inside: avoid; }
+  .fig .cap { font-family: var(--mono); font-size: 7pt; letter-spacing: 2px;
+              text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+  .lane { display: flex; align-items: center; gap: 10px; margin: 9px 0; }
+  .lane .lbl { font-family: var(--mono); font-size: 7.6pt; color: var(--ink-3); width: 92px;
+               flex-shrink: 0; text-align: right; }
+  .track { position: relative; flex: 1; height: 14px; }
+  .track::before { content: ""; position: absolute; left: 0; right: 0; top: 6.5px;
+                   height: 1px; background: var(--line); }
+  .dot { position: absolute; top: 2px; width: 10px; height: 10px; border-radius: 50%;
+         background: #FFFFFF; border: 2.5px solid var(--signal-deep); }
+  .dot.esc { background: var(--ink); border-color: var(--ink); }
+  .axis { display: flex; justify-content: space-between; font-family: var(--mono);
+          font-size: 6.8pt; color: var(--muted); margin: 6px 0 0 102px; }
+  .legend { display: flex; gap: 18px; font-size: 8pt; color: var(--muted);
+            margin: 8px 0 0 102px; align-items: center; }
+  .legend i { display: inline-block; width: 9px; height: 9px; border-radius: 50%;
+              background: #fff; border: 2.5px solid var(--signal-deep); margin-right: 5px;
+              vertical-align: -1px; }
+  .legend i.esc { background: var(--ink); border-color: var(--ink); }
+
+  /* phase segmentation figure */
+  .seg { display: flex; gap: 6px; margin: 12px 0; page-break-inside: avoid; }
+  .seg .box { flex: 1; border: 1px solid var(--line); border-radius: 6px; padding: 8px 6px 7px;
+              text-align: center; }
+  .seg .box.on { border-color: var(--signal); background: var(--signal-soft); }
+  .seg .ph { font-family: var(--mono); font-size: 6.6pt; letter-spacing: 1px;
+             text-transform: uppercase; color: var(--muted); }
+  .seg .tk { font-family: var(--mono); font-size: 8.6pt; color: var(--ink-3); margin-top: 4px;
+             font-weight: 600; }
+  .seg .box.on .tk { color: var(--signal-deep); }
+
+  .pagebreak { page-break-before: always; }
+
+  /* ============================ SCREEN vs PRINT ============================ */
   @media screen {
-    body { padding: 0 0 40px; }
-    .cover { min-height: 92vh; box-shadow: 0 2px 18px rgba(13,36,54,.25); }
-    .cover-inner { padding-left: 24px; padding-right: 24px; }
-    .sheet { margin-top: 26px; box-shadow: 0 2px 14px rgba(13,36,54,.12); border-radius: 4px; }
+    body { padding: 0 0 46px; }
+    .cover { min-height: 94vh; box-shadow: 0 3px 26px rgba(10,22,34,.35); }
+    .cover-inner { padding-left: 26px; padding-right: 26px; }
+    .sheet { margin-top: 28px; box-shadow: 0 3px 18px rgba(10,22,34,.14); border-radius: 5px; }
   }
-  @page { size: A4; margin: 18mm 16mm; }
+  @page { size: A4; margin: 17mm 15mm; }
   @page :first { margin: 0; }
   @media print {
     body { background: none; }
     .cover { width: 210mm; height: 296mm; page-break-after: always; box-shadow: none; }
-    .cover-inner { padding-left: 20mm; padding-right: 20mm; }
+    .cover-inner { padding-left: 19mm; padding-right: 19mm; }
     .sheet { max-width: none; margin: 0; padding: 0; box-shadow: none; border-radius: 0; }
-    .pagebreak { page-break-before: always; }
   }
 </style>
 </head>
 <body>
 
-<!-- ============================ COVER ============================ -->
+<!-- ================================ COVER ================================ -->
 <header class="cover">
   <div class="cover-inner">
+    <div class="cv-top">
+      <span><b>&gt;&gt;</b> technical documentation</span>
+      <span>ticket data: november 2024</span>
+    </div>
     <div>
-      <div class="kicker">Technical documentation</div>
-      <h1>System Ticket Data Summary
-        <span class="thin">Raw ticket exports, distilled into customer stories</span>
+      <h1>System Ticket<br>Data Summary
+        <em>raw exports in, verified customer stories out</em>
       </h1>
-      <p class="sub">A validated LangGraph pipeline that loads, repairs and cleans system
-      ticket data, generates per-customer storytelling summaries with an LLM, and serves
-      a business insights dashboard through Streamlit - with every data repair
-      fingerprinted, reported, and audited.</p>
-      <div class="pipe">
-        <span class="node">load</span><span class="sep"></span>
-        <span class="node hot">repair</span><span class="sep"></span>
-        <span class="node">convert</span><span class="sep"></span>
-        <span class="node">clean</span><span class="sep"></span>
-        <span class="node">filter</span><span class="sep"></span>
-        <span class="node">map_products</span><span class="sep"></span>
-        <span class="node hot">summarize</span>
+      <p class="sub">A LangGraph pipeline that <b>validates</b> a broken ticket export,
+      <b>repairs</b> a fingerprinted column shift, and generates per-customer storytelling
+      summaries under an <b>enforced output contract</b> - every ticket reference proven
+      against the data, every timeframe computed from it, every repair reported. Served
+      by a Streamlit app with a live business-insights dashboard.</p>
+      <div class="flow">
+        <span class="n">load</span><span class="w"></span>
+        <span class="n hot">repair</span><span class="w"></span>
+        <span class="n">convert</span><span class="w"></span>
+        <span class="n">clean</span><span class="w"></span>
+        <span class="n">filter</span><span class="w"></span>
+        <span class="n">map_products</span><span class="w"></span>
+        <span class="n hot">summarize</span>
       </div>
     </div>
     <div class="stats">
-      <div class="stat"><div class="n">42</div><div class="l">raw tickets parsed and validated against a 38-column contract</div></div>
-      <div class="stat"><div class="n">19</div><div class="l">shifted rows detected by fingerprint and repaired, with a printed report</div></div>
-      <div class="stat"><div class="n">18</div><div class="l">storytelling summaries per run - one per customer per product</div></div>
-      <div class="stat"><div class="n">0</div><div class="l">invented or omitted tickets across the full summary audit</div></div>
+      <div class="stat"><div class="n">42</div>
+        <div class="l">raw tickets validated against a 38-column contract - malformed files raise, never repaired silently</div></div>
+      <div class="stat"><div class="n">19</div>
+        <div class="l">shifted rows detected by fingerprint and repaired, every order number reported</div></div>
+      <div class="stat"><div class="n">18</div>
+        <div class="l">storytelling summaries per run - one per customer per product, schema-enforced</div></div>
+      <div class="stat"><div class="n">18<small>/18</small></div>
+        <div class="l">summaries verified: zero invented and zero omitted ticket references</div></div>
     </div>
-    <div class="meta">
-      <div>July 2026 &nbsp;&middot;&nbsp; ticket data: November 2024</div>
-      <div class="stack"><span>Python</span><span>pandas</span><span>LangChain</span><span>LangGraph</span><span>Gemini</span><span>Streamlit</span></div>
+    <div class="cv-meta">
+      <span>july 2026</span>
+      <div class="chips"><span>python</span><span>pandas</span><span>langchain</span><span>langgraph</span><span>gemini</span><span>streamlit</span></div>
     </div>
   </div>
 </header>
 
 <main class="sheet">
 
-<h2><span class="num">&sect;</span>Contents</h2>
+<div class="strip"><span class="no">&gt;&gt; 00</span><h2>Contents</h2><span class="tagline">index</span></div>
 <nav class="toc">
-  <a href="#s1"><span class="tn">01</span> Overview and architecture</a>
-  <a href="#s5"><span class="tn">05</span> Implementation: summary generation</a>
-  <a href="#s2"><span class="tn">02</span> The data: columns and quality issues</a>
-  <a href="#s6"><span class="tn">06</span> Code documentation</a>
-  <a href="#s3"><span class="tn">03</span> Implementation: data preprocessing</a>
-  <a href="#s7"><span class="tn">07</span> User guide: the Streamlit app</a>
-  <a href="#s4"><span class="tn">04</span> Implementation: category mapping</a>
-  <a href="#s8"><span class="tn">08</span> Business insights (bonus analysis)</a>
+  <a href="#s1"><span class="tn">01</span> Overview and architecture <span class="dots">arch</span></a>
+  <a href="#s5"><span class="tn">05</span> Summary generation and the output contract <span class="dots">llm</span></a>
+  <a href="#s2"><span class="tn">02</span> The data: columns and quality issues <span class="dots">data</span></a>
+  <a href="#s6"><span class="tn">06</span> Code documentation <span class="dots">ref</span></a>
+  <a href="#s3"><span class="tn">03</span> Preprocessing: validate and repair <span class="dots">etl</span></a>
+  <a href="#s7"><span class="tn">07</span> User guide: the Streamlit app <span class="dots">app</span></a>
+  <a href="#s4"><span class="tn">04</span> Category mapping <span class="dots">map</span></a>
+  <a href="#s8"><span class="tn">08</span> Business insights <span class="dots">kpi</span></a>
 </nav>
 
-<h2 id="s1"><span class="num">01</span>Overview and architecture</h2>
+<!-- ================================ 01 ================================ -->
+<div class="strip" id="s1"><span class="no">&gt;&gt; 01</span><h2>Overview and architecture</h2><span class="tagline">arch</span></div>
+
 <p>The task: convert a raw system-ticket text file into per-customer, per-product
 storytelling summaries generated by an LLM, presented in a Streamlit web app, with a
 data-quality-safe preprocessing pipeline and a business insights dashboard.</p>
 
 <p>The whole pipeline is a <b>LangGraph graph</b>: every step is a node, and one
-<code>invoke</code> call carries a file from raw text to finished summaries:</p>
+<code>invoke</code> call carries a file from raw text to finished, verified summaries:</p>
 
-<div class="pipe-light">
-  <span class="node">load</span><span class="sep"></span>
-  <span class="node">repair</span><span class="sep"></span>
-  <span class="node">convert</span><span class="sep"></span>
-  <span class="node">clean</span><span class="sep"></span>
-  <span class="node">filter</span><span class="sep"></span>
-  <span class="node">map_products</span><span class="sep"></span>
-  <span class="node">summarize</span>
+<div class="flow-l">
+  <span class="n">START</span><span class="w"></span>
+  <span class="n">load</span><span class="w"></span>
+  <span class="n hot">repair</span><span class="w"></span>
+  <span class="n">convert</span><span class="w"></span>
+  <span class="n">clean</span><span class="w"></span>
+  <span class="n">filter</span><span class="w"></span>
+  <span class="n">map_products</span><span class="w"></span>
+  <span class="n hot">summarize</span><span class="w"></span>
+  <span class="n">END</span>
 </div>
 
 <table>
 <tr><th>Component</th><th>Role</th></tr>
 <tr><td><code>notebooks/ticket_summary.ipynb</code></td><td>Prototype and teaching artifact: each step explained, explored line by line with visible output, then assembled into a function</td></tr>
-<tr><td><code>pipeline.py</code></td><td>The reusable module: all step functions plus the compiled LangGraph graph</td></tr>
-<tr><td><code>app.py</code></td><td>Streamlit app: upload, preprocessing report, AI summaries, insights dashboard</td></tr>
+<tr><td><code>pipeline.py</code></td><td>The reusable module: all step functions, the output contract, and the compiled LangGraph graph</td></tr>
+<tr><td><code>app.py</code></td><td>Streamlit app: upload, preprocessing report, verified AI summaries, insights dashboard</td></tr>
 <tr><td><code>.env</code></td><td>Secrets and model choice (<code>GOOGLE_API_KEY</code>, <code>GEMINI_MODEL</code>); git-ignored, never hard-coded</td></tr>
 </table>
 
-<div class="rule"><span class="tag">Design rule 1</span>
+<div class="callout rule"><span class="tag">design rule 01</span>
 <b>Validate, never repair silently.</b> Malformed input raises a clear error with line
 numbers. The one repair that is performed (the column shift, &sect;3.2) is
 fingerprint-verified and reports every affected ticket number on every run.</div>
 
-<div class="rule"><span class="tag">Design rule 2</span>
+<div class="callout rule"><span class="tag">design rule 02</span>
 <b>One job per function.</b> Each step is a small function used identically by the
 notebook, the graph and the app - changing a grouping or a prompt touches one place.</div>
 
-<h2 id="s2"><span class="num">02</span>The data: columns and quality issues</h2>
+<!-- ================================ 02 ================================ -->
+<div class="strip" id="s2"><span class="no">&gt;&gt; 02</span><h2>The data: columns and quality issues</h2><span class="tagline">data</span></div>
+
 <p>The raw file is a comma-separated table: line 1 holds 38 column names, every following
 line is one ticket (42 in the sample; mixed English and German).</p>
 
-<h3>2.1 Column groups</h3>
+<h3><span class="k">2.1</span>Column groups</h3>
 <table>
 <tr><th>Group</th><th>Columns</th><th>Meaning</th></tr>
 <tr><td>Identifiers</td><td>ORDER_NUMBER, ORDER_ID</td><td>Public ticket reference (001-.../24) and internal id</td></tr>
@@ -244,7 +363,7 @@ line is one ticket (42 in the sample; mixed English and German).</p>
 <tr><td>Empty</td><td>ORDER_UNIT_ID, ASSIGNMENT_*, others</td><td>Completely empty in this export; dropped during cleaning with a printed report</td></tr>
 </table>
 
-<h3>2.2 Quality issues discovered - and how each is handled</h3>
+<h3><span class="k">2.2</span>Quality issues discovered - and how each is handled</h3>
 <table>
 <tr><th>Issue</th><th>Symptom</th><th>Handling</th></tr>
 <tr><td>UTF-8 BOM</td><td>Invisible character glued to the first column name; <code>df["ORDER_NUMBER"]</code> raised KeyError</td><td>Read with <code>encoding="utf-8-sig"</code></td></tr>
@@ -253,10 +372,11 @@ line is one ticket (42 in the sample; mixed English and German).</p>
 <tr><td>Mixed languages</td><td>German rows (Kurzticket, Kabelrouter, keine Verbindung)</td><td>Category codes are language-neutral; the LLM translates narratives; analytics normalize device names</td></tr>
 </table>
 
+<!-- ================================ 03 ================================ -->
 <div class="pagebreak"></div>
-<h2 id="s3"><span class="num">03</span>Implementation: data preprocessing</h2>
+<div class="strip" id="s3"><span class="no">&gt;&gt; 03</span><h2>Preprocessing: validate and repair</h2><span class="tagline">etl</span></div>
 
-<h3>3.1 Load and validate</h3>
+<h3><span class="k">3.1</span>Load and validate</h3>
 <p>Parses with <code>csv.reader</code>. Accepts files <b>with or without a header line</b>:</p>
 <ul>
 <li>Line 1 equals the standard 38-column header - header present.</li>
@@ -284,7 +404,7 @@ line 1 ("wrong file?"), empty file, or a header with no tickets.</li>
 <p>The schema itself is one verbatim string (<code>EXPECTED_HEADER</code>): a single source
 of truth copied from the ticket system's export and split into the 38 names.</p>
 
-<h3>3.2 Repair the shifted rows</h3>
+<h3><span class="k">3.2</span>Repair the shifted rows</h3>
 <p>The fingerprint: support-team codes (TSCW2, TSCKT, TSCS2) are only ever legal in
 PLANNING_GROUP_KB. A team code sitting in NOTE_MAXIMUM proves the row slid one column
 left. The repair is two list operations, applied only to fingerprinted rows:</p>
@@ -293,36 +413,37 @@ left. The repair is two list operations, applied only to fingerprinted rows:</p>
         r.insert(add_idx, "N/A")    <span class="c"># re-insert the placeholder -> rest slides right</span>
         r.pop()                     <span class="c"># drop the padding beyond the last column</span>
         repaired.append(r[0])
-print(f"Repaired {len(repaired)} shifted tickets: {repaired}")</code></pre>
-<div class="rule"><span class="tag">Why this is safe</span>
+<span class="g">log.info(f"repair: {len(repaired)} shifted tickets fixed: {repaired}")</span></code></pre>
+<div class="callout rule"><span class="tag">why this is safe</span>
 Nothing is invented: every value already exists in the row and only moves back under its
 correct header. The removed tail is always padding (verified: N/A or empty in all 19
 rows). The repair is idempotent - on already-repaired data it finds zero fingerprints.
 Without it, the LLM would read team codes as customer notes for 19 of 32 tickets.</div>
 
-<h3>3.3 Convert</h3>
+<h3><span class="k">3.3</span>Convert</h3>
 <p>The repaired table is persisted as <code>data/tickets_converted.csv</code> and
 <code>.xlsx</code> - the format conversion the task requires, done after repair so the
 files carry corrected columns.</p>
 
-<h3>3.4 Clean</h3>
+<h3><span class="k">3.4</span>Clean</h3>
 <pre><code>out = out.apply(lambda s: s.str.strip())         <span class="c"># stray spaces</span>
 out = out.replace({"N/A": pd.NA, "": pd.NA})     <span class="c"># literal N/A -> real missing values</span>
 out["ACCEPTANCE_TIME"] = pd.to_datetime(out["ACCEPTANCE_TIME"], format="%m/%d/%Y %H:%M")
 out["COMPLETION_TIME"] = pd.to_datetime(out["COMPLETION_TIME"], format="%m/%d/%Y %H:%M")
 out["RESOLUTION_MINUTES"] = (out["COMPLETION_TIME"] - out["ACCEPTANCE_TIME"]).dt.total_seconds() / 60
 empty_cols = out.columns[out.isna().all()]       <span class="c"># 100%-empty columns only</span>
-out = out.drop(columns=empty_cols)               <span class="c"># drop is printed, never silent</span></code></pre>
+out = out.drop(columns=empty_cols)               <span class="c"># drop is logged, never silent</span></code></pre>
 <p>Dates use the default <code>errors="raise"</code>: a garbage timestamp stops the run
 loudly. The empty-column check uses <code>.all()</code>, so a column with even a single
 real value always survives; after the repair, 10 columns are genuinely empty and dropped.</p>
 
-<h3>3.5 Filter</h3>
+<h3><span class="k">3.5</span>Filter</h3>
 <p>Only the predefined categories HDW, NET, KAI, KAV, GIGA, VOD, KAD are kept
 (<code>isin</code> mask); NTF inquiries and SOP activations are excluded. Result: 32 of 42
 tickets, sorted chronologically - order matters for storytelling.</p>
 
-<h2 id="s4"><span class="num">04</span>Implementation: category mapping</h2>
+<!-- ================================ 04 ================================ -->
+<div class="strip" id="s4"><span class="no">&gt;&gt; 04</span><h2>Category mapping</h2><span class="tagline">map</span></div>
 <table>
 <tr><th>Product</th><th>Categories</th><th>Note</th></tr>
 <tr><td>Broadband</td><td>KAI, NET</td><td rowspan="5">Mapping exactly as specified by the task document</td></tr>
@@ -336,19 +457,21 @@ tickets, sorted chronologically - order matters for storytelling.</p>
                        "KAD": "TV", "GIGA": "GIGA", "VOD": "VOD", "HDW": "Hardware"}
 out["PRODUCT"] = out["SERVICE_CATEGORY"].map(CATEGORY_TO_PRODUCT)</code></pre>
 
+<!-- ================================ 05 ================================ -->
 <div class="pagebreak"></div>
-<h2 id="s5"><span class="num">05</span>Implementation: summary generation</h2>
+<div class="strip" id="s5"><span class="no">&gt;&gt; 05</span><h2>Summary generation and the output contract</h2><span class="tagline">llm</span></div>
+
 <p>Summaries are generated <b>per customer per product</b> - each narrative describes one
 real customer's history with one product. For the sample file: 3 customers x 6 products =
-18 summaries, returned as <code>{customer: {product: text}}</code>.</p>
+18 summaries, returned as <code>{customer: {product: {markdown, status, story}}}</code>.</p>
 
-<h3>5.1 Ticket serialization</h3>
+<h3><span class="k">5.1</span>Ticket serialization</h3>
 <p>The LLM receives each group's tickets as compact chronological lines; only non-missing
 fields are included - which is why cleaning produced real missing values first:</p>
 <pre><code>- 001-0671177/24 | 2024-11-05 11:00 | cat=HDW | issue: Cable Router / WLAN / Slow
   | note: WLAN slow | resolution: WLAN settings optimized / OK</code></pre>
 
-<h3>5.2 The output contract: schema, validation, evaluation</h3>
+<h3><span class="k">5.2</span>The output contract: schema, validation, evaluation</h3>
 <p>The summary is not free text - it is a validated contract, built in four layers:</p>
 <ul>
 <li><b>Schema</b> - a Pydantic model (five phases, each with <code>ticket_numbers</code>
@@ -368,7 +491,20 @@ verified tickets' real timestamps by pandas. A displayed date cannot be hallucin
 because the model never writes one.</li>
 </ul>
 
-<div class="finding"><span class="tag">Guarantee</span>
+<p>Phase assignment is <b>order-preserving segmentation</b>: the model walks the
+chronological tickets and only ever decides "stay in this phase or advance" - never
+backward. A phase can hold several tickets (one episode, e.g. two calls in one morning)
+or none. Customer 123's Hardware story, as segmented in a verified run:</p>
+
+<div class="seg">
+  <div class="box on"><div class="ph">1 initial</div><div class="tk">t1</div></div>
+  <div class="box on"><div class="ph">2 follow-ups</div><div class="tk">t2&nbsp;&nbsp;t3</div></div>
+  <div class="box on"><div class="ph">3 developments</div><div class="tk">t4</div></div>
+  <div class="box on"><div class="ph">4 later</div><div class="tk">t5</div></div>
+  <div class="box"><div class="ph">5 recent</div><div class="tk">-</div></div>
+</div>
+
+<div class="callout finding"><span class="tag">guarantee</span>
 The reference check runs live on every generation - each of the 18 summaries carries a
 status (<b>verified / corrected / unverified</b>) shown in the app. Validators are
 inspectors, not editors: a flawed answer is rejected and regenerated by the model, never
@@ -376,74 +512,77 @@ silently trimmed or patched by our code. Narrative prose remains grounded (the m
 only the ticket lines) and auditable via its per-section citations - verified where
 verifiable, grounded where not.</div>
 
-<h3>5.3 Execution</h3>
-<p>The chain <code>STORY_PROMPT | llm | StrOutputParser()</code> is wrapped in
-<code>.with_retry(stop_after_attempt=3)</code>: the Gemini endpoint intermittently drops
-connections, and one hiccup must not kill an 18-call run. The graph's
-<code>summarize</code> node loops the groups and reports progress per group. The model
-name lives in <code>.env</code> only (<code>gemma-4-31b-it</code> for development with its
-high free quota, <code>gemini-3.5-flash</code> for final runs) - switching models is a
-one-line change, which proved itself when Google retired gemini-2.5-flash mid-project.</p>
+<h3><span class="k">5.3</span>Execution and resilience</h3>
+<p>The structured call is wrapped twice: <code>timeout=90</code> converts a silently
+stalled connection into an error instead of an infinite hang, and
+<code>with_retry(stop_after_attempt=3)</code> converts that error into a fresh attempt -
+observed in production: a dead connection cost 90s, the retry verified in 6.5s. Every
+pipeline stage logs a timestamped progress line
+(<code>summarize [17/18]: -> verified in 4.8s</code>), so a running job always shows
+where it is. The model name lives in <code>.env</code> only (<code>gemma-4-31b-it</code>
+for development with its high free quota, <code>gemini-3.5-flash</code> for final runs) -
+switching models is a one-line change, proven when Google retired gemini-2.5-flash
+mid-project.</p>
 
-<h2 id="s6"><span class="num">06</span>Code documentation</h2>
+<!-- ================================ 06 ================================ -->
+<div class="pagebreak"></div>
+<div class="strip" id="s6"><span class="no">&gt;&gt; 06</span><h2>Code documentation</h2><span class="tagline">ref</span></div>
 <ul>
 <li><b>pipeline.py</b> - every function carries a docstring stating its contract; inline
 comments mark only non-obvious constraints (why utf-8-sig, why the fingerprint is
-reliable, why <code>.all()</code> not <code>.any()</code>, why retries exist).</li>
-<li><b>notebooks/ticket_summary.ipynb</b> - every step is documented three times: a markdown cell
-explaining the logic in plain words, exploratory cells running each line separately with
-visible output, then the assembled function. Debug trails (the BOM incident) are kept and
-labeled for learning value.</li>
+reliable, why <code>.all()</code> not <code>.any()</code>, why timeout and retries exist).</li>
+<li><b>notebooks/ticket_summary.ipynb</b> - every step is documented three times: a
+markdown cell explaining the logic in plain words, exploratory cells running each line
+separately with visible output, then the assembled function. Debug trails (the BOM
+incident) are kept and labeled for learning value.</li>
 <li><b>app.py</b> - section banners per tab; all findings under charts are computed from
 the loaded data at render time, never hardcoded text.</li>
 </ul>
 
-<h3>6.1 pipeline.py function reference</h3>
+<h3><span class="k">6.1</span>pipeline.py function reference</h3>
 <table>
 <tr><th>Function</th><th>Contract</th></tr>
 <tr><td><code>load_raw_tickets(source)</code></td><td>Path, file-like, text or bytes to <code>(header, rows, had_header)</code>; raises ValueError on any malformed input</td></tr>
 <tr><td><code>find_shifted_orders(rows, header)</code></td><td>Order numbers of fingerprinted (shifted) rows, for UI reporting before repair</td></tr>
-<tr><td><code>repair_shifted_rows(rows, header)</code></td><td>Insert/pop repair in place; prints repaired ticket numbers; idempotent</td></tr>
+<tr><td><code>repair_shifted_rows(rows, header)</code></td><td>Insert/pop repair in place; logs repaired ticket numbers; idempotent</td></tr>
 <tr><td><code>convert_and_save(df, out_dir)</code></td><td>Writes CSV + XLSX; returns paths</td></tr>
 <tr><td><code>clean_tickets(df)</code></td><td>Strip, N/A to missing, parse dates (raise on garbage), RESOLUTION_MINUTES, drop 100%-empty columns with report</td></tr>
 <tr><td><code>filter_categories(df)</code></td><td>Keep allowed categories, sort chronologically</td></tr>
 <tr><td><code>map_products(df)</code></td><td>Add PRODUCT column from the mapping table</td></tr>
 <tr><td><code>format_tickets(df)</code></td><td>DataFrame to compact chronological text lines for the LLM</td></tr>
-<tr><td><code>get_llm()</code></td><td>ChatGoogleGenerativeAI from .env (GEMINI_MODEL); raises if the key is missing</td></tr>
+<tr><td><code>get_llm()</code></td><td>ChatGoogleGenerativeAI from .env (GEMINI_MODEL, timeout=90); raises if the key is missing</td></tr>
 <tr><td><code>evaluate_story(story, group)</code></td><td>Reference checklists: invented + omitted tickets vs the group's data; empty list = proven</td></tr>
 <tr><td><code>summarize_group(group, llm, ...)</code></td><td>Generate, evaluate, corrective retries; returns (story, status)</td></tr>
 <tr><td><code>section_timeframe / render_story</code></td><td>Data-computed timeframes; validated object to five-section Markdown</td></tr>
-<tr><td><code>summarize_products(df, llm, on_progress)</code></td><td>Per customer x product: {markdown, status, story} entries, transient-error retries</td></tr>
+<tr><td><code>summarize_products(df, llm, on_progress)</code></td><td>Per customer x product: {markdown, status, story} entries, timed progress logs</td></tr>
 <tr><td><code>build_pipeline(llm, on_progress)</code></td><td>Compiles the full LangGraph graph (nodes added one by one, linear edges)</td></tr>
 </table>
 
-<div class="pagebreak"></div>
-<h2 id="s7"><span class="num">07</span>User guide: the Streamlit app</h2>
-<h3>7.1 Setup (once)</h3>
+<!-- ================================ 07 ================================ -->
+<div class="strip" id="s7"><span class="no">&gt;&gt; 07</span><h2>User guide: the Streamlit app</h2><span class="tagline">app</span></div>
+
+<h3><span class="k">7.1</span>Setup (once)</h3>
 <pre><code>uv sync                            <span class="c"># or: pip install -r requirements.txt</span>
 <span class="c"># .env in the project root:</span>
 GOOGLE_API_KEY=your-key-here       <span class="c"># https://aistudio.google.com/apikey</span>
 GEMINI_MODEL=gemma-4-31b-it</code></pre>
 
-<h3>7.2 Run</h3>
+<h3><span class="k">7.2</span>Run</h3>
 <pre><code>streamlit run app.py               <span class="c"># browser opens at http://localhost:8501</span></code></pre>
 
-<h3>7.3 Using the app</h3>
+<h3><span class="k">7.3</span>Using the app</h3>
 <ol>
-<li><b>Data source</b>: the bundled sample dataset loads automatically - no upload
-needed. The sidebar's "Active data file" panel shows which file is in use (with a raw
-download for inspection). Optionally upload your own <code>.txt</code> or
-<code>.csv</code>, with or without the header line (a banner reports when the standard
-header was applied automatically).</li>
+<li><b>Data source</b>: the bundled sample dataset loads automatically; upload a .txt or
+.csv (with or without the header line) to replace it. The sidebar's "Active data file"
+panel always shows which file is in use, with a raw download. Invalid files get one
+clearly worded error instead of a traceback.</li>
 <li><b>Preprocessing report</b>: a data-quality panel lists any repaired shifted tickets;
-the metric row shows raw count, filtered count, products and average resolution time. A
-clearly worded error appears instead if the file is invalid (wrong scheme, wrong file,
-empty, broken rows).</li>
+the metric row shows raw vs analyzed counts.</li>
 <li><b>Data tab</b>: the converted table (with CSV download) and the cleaned,
 product-mapped table.</li>
 <li><b>AI Summaries tab</b>: click <i>Generate summaries</i>, watch per-group progress,
-then pick a <b>customer</b> and a <b>product</b> to read that story - each summary
-shows its verification badge (verified / corrected / unverified) and an aggregate
+then pick a <b>customer</b> and a <b>product</b> to read that story - each summary shows
+its verification badge (verified / corrected / unverified) and an aggregate
 reference-check line. Download the complete set as a formatted <b>PDF</b> (one page per
 customer x product) or as Markdown.</li>
 <li><b>Insights tab</b>: an executive scorecard (repeat rate, first-contact resolution,
@@ -453,73 +592,107 @@ selection. Extra views (most common fixes, FCR by product, team workload, root-c
 codes, volume timelines) sit in a clearly labeled expander.</li>
 </ol>
 
-<h3>7.4 Notebook usage</h3>
-<p>Open <code>notebooks/ticket_summary.ipynb</code> and Run All: Steps 0-6 run without any API key;
-Step 7 onward needs <code>GOOGLE_API_KEY</code> in .env. Step 10 prints the 18 summaries;
-Step 11 reproduces the insights charts cell by cell.</p>
+<h3><span class="k">7.4</span>Notebook usage</h3>
+<p>Open <code>notebooks/ticket_summary.ipynb</code> and Run All: Steps 0-6 run without any
+API key; Step 7 onward needs <code>GOOGLE_API_KEY</code> in .env. Step 8.5 demonstrates
+the output contract live (including a deliberately broken story being caught); Step 10
+prints the 18 verified summaries; Step 11 reproduces the analysis charts cell by cell.</p>
 
-<h2 id="s8"><span class="num">08</span>Business insights (bonus analysis)</h2>
+<!-- ================================ 08 ================================ -->
+<div class="pagebreak"></div>
+<div class="strip" id="s8"><span class="no">&gt;&gt; 08</span><h2>Business insights</h2><span class="tagline">kpi</span></div>
+
 <p class="lede">The analysis is structured as the three questions every support dataset
-must answer. Each chart in the app ends with a finding computed live from the data.</p>
+must answer. Each chart in the app ends with a finding computed live from the data -
+the numbers below are the audited values for the full sample.</p>
+
+<div class="kpis">
+  <div class="kpi"><div class="v">44<small>%</small></div><div class="k">repeat rate</div></div>
+  <div class="kpi"><div class="v">67<small>%</small></div><div class="k">first-contact res.</div></div>
+  <div class="kpi"><div class="v">28<small>%</small></div><div class="k">escalation rate</div></div>
+  <div class="kpi"><div class="v">30<small>min</small></div><div class="k">avg resolution</div></div>
+  <div class="kpi"><div class="v">1.8</div><div class="k">contacts / issue</div></div>
+</div>
 
 <div class="qgrid">
   <div class="qcard"><div class="qn">Q1</div><div class="qt">What breaks the most?</div>
   <div class="qd">Pareto per device (German names normalized) + tickets per product - where the volume comes from.</div></div>
   <div class="qcard"><div class="qn">Q2</div><div class="qt">Do fixes hold?</div>
-  <div class="qd">Repeat-contact chains per customer x product, with days between contacts and each chain's final resolution.</div></div>
+  <div class="qd">Repeat-contact chains per customer x product: a timeline of every contact, colored remote fix vs escalation.</div></div>
   <div class="qcard"><div class="qn">Q3</div><div class="qt">Which customers need attention?</div>
   <div class="qd">Tickets per customer by product + first vs repeat contacts - the churn-risk view.</div></div>
 </div>
 
-<p>Above the questions sits an <b>executive scorecard</b> computed from the filtered data:
-repeat-contact rate 44%, first-contact resolution 67%, escalation rate 28%, average
-resolution 33 minutes, 1.8 contacts per issue.</p>
-
 <div class="insight">
-  <div class="big">44<small>%</small><span class="u">of all tickets</span></div>
+  <div class="big">44<small>%</small><span class="u">of all tickets, one device</span></div>
   <div>
     <div class="tag">Q1 finding</div>
     <div class="head">One device is almost half the support volume</div>
     <p>14 of 32 analyzed tickets are the cable router - all three customers, the same
     device, within the same two weeks. No other issue area exceeds 3 tickets.</p>
-    <div class="act">Action: one targeted fix (firmware push, batch swap, self-service
-    WLAN reset) attacks 44% of the entire queue at once.</div>
+    <div class="act"><b>Action:</b> one targeted fix (firmware push, batch swap,
+    self-service WLAN reset) attacks 44% of the entire queue at once.</div>
   </div>
 </div>
 
 <div class="insight">
-  <div class="big">100<small>%</small><span class="u">of repeat chains ended in escalation</span></div>
+  <div class="big">5<small>/6</small><span class="u">repeat chains ended in escalation</span></div>
   <div>
     <div class="tag">Q2 finding</div>
     <div class="head">Repeated remote fixes never held</div>
     <p>Measured hold times inside the router chains: 2 to 25 hours per remote fix (best
-    case 6 days, then total device failure). Not one repeated remote fix cured the
-    problem - every chain still ended in a device replacement or a technician visit.</p>
-    <div class="act">Action: pilot an escalation trigger on the second contact for the
-    same issue - and re-measure the cure rate per contact number at production scale
+    case 6 days, then total device failure). Five of the six repeat chains - including
+    all three router chains - ended in a device replacement or a technician visit; the
+    sixth resolved as a forgotten PIN, not a hardware fault.</p>
+    <div class="act"><b>Action:</b> pilot an escalation trigger on the second contact for
+    the same issue - and re-measure the cure rate per contact number at production scale
     before fixing the threshold.</div>
   </div>
+</div>
+
+<div class="fig">
+  <div class="cap">router repeat chains - every contact, nov 05 to nov 20</div>
+  <div class="lane"><span class="lbl">123 hardware</span>
+    <span class="track">
+      <span class="dot" style="left:1%"></span><span class="dot" style="left:8%"></span>
+      <span class="dot" style="left:11%"></span><span class="dot" style="left:15%"></span>
+      <span class="dot esc" style="left:53%"></span>
+    </span></div>
+  <div class="lane"><span class="lbl">456 hardware</span>
+    <span class="track">
+      <span class="dot" style="left:20%"></span><span class="dot" style="left:23%"></span>
+      <span class="dot esc" style="left:27%"></span><span class="dot esc" style="left:47%"></span>
+    </span></div>
+  <div class="lane"><span class="lbl">789 hardware</span>
+    <span class="track">
+      <span class="dot" style="left:33%"></span><span class="dot esc" style="left:40%"></span>
+      <span class="dot" style="left:43%"></span><span class="dot esc" style="left:47%"></span>
+      <span class="dot esc" style="left:73%"></span>
+    </span></div>
+  <div class="axis"><span>nov 05</span><span>nov 10</span><span>nov 15</span><span>nov 20</span></div>
+  <div class="legend"><span><i></i>remote fix</span><span><i class="esc"></i>escalation
+  (technician / device shipped)</span></div>
 </div>
 
 <div class="insight">
   <div class="big">11<span class="u">contacts from one customer in two weeks</span></div>
   <div>
     <div class="tag">Q3 finding</div>
-    <div class="head">Every customer is a repeat caller</div>
+    <div class="head">Every customer is a repeat caller - churn risk, not just cost</div>
     <p>All three customers contacted support 10-11 times inside two weeks, and 44% of
     those contacts were repeats about a product whose previous ticket had already been
     closed as resolved. First-contact resolution: 100% for four products, 0% for
-    Hardware - one device destroys the KPI.</p>
-    <div class="act">Action: treat heavy repeat callers as churn risks, not workload -
-    contact them proactively once the device fix ships, before they consider
-    cancellation.</div>
+    Hardware - one device destroys the KPI. (Broadband also shows 0%, but that is an
+    artifact of the KAI+NET product bundling, not failed fixes.)</p>
+    <div class="act"><b>Action:</b> treat heavy repeat callers as churn risks - contact
+    them proactively once the device fix ships, before the renewal conversation.</div>
   </div>
 </div>
 
-<div class="caveat-strip"><span class="tag">Scale caveat</span>
-<span>42 tickets, 3 customers, 2 weeks. The findings are real in this file and the method
+<div class="callout caveat"><span class="tag">scale caveat</span>
+42 tickets, 3 customers, 2 weeks. The findings above are real in this file and the method
 is production-ready, but staffing views (weekday x hour heatmap, daily volume, customer
-timelines) stay illustrative until fed real volume - the app labels them accordingly.</span></div>
+timelines) are illustrative until fed real volume - the app labels them accordingly.</div>
 
 </main>
 </body>

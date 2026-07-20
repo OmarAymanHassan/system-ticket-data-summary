@@ -412,15 +412,22 @@ with tab_insights:
     rep_per_cust = (ct[ct["type"] == "repeat contact"]
                     .set_index("customer")["tickets"] if len(ct) else pd.Series(dtype=int))
     top_cust = per_cust.index[0]
-    st.info(
-        f"Finding: every customer in this selection is a repeat caller. Customer "
-        f"{top_cust} contacted support {per_cust.iloc[0]} times in two weeks"
-        + (f", {int(rep_per_cust.get(top_cust, 0))} of them repeat contacts"
-           if len(rep_per_cust) else "")
-        + " - that is a churn risk, not just a support cost: a customer who keeps "
-        "calling about the same product is a customer considering cancellation. These "
-        "are the accounts to contact proactively once the device fix ships."
-    )
+    if repeat_tickets > 0:      # claim only what the current selection supports
+        st.info(
+            f"Finding: customers in this selection are repeat callers. Customer "
+            f"{top_cust} contacted support {per_cust.iloc[0]} times in two weeks"
+            + (f", {int(rep_per_cust.get(top_cust, 0))} of them repeat contacts"
+               if len(rep_per_cust) else "")
+            + " - that is a churn risk, not just a support cost: a customer who keeps "
+            "calling about the same product is a customer considering cancellation. "
+            "These are the accounts to contact proactively once the device fix ships."
+        )
+    else:
+        st.info(
+            "Finding: no repeat contacts in this selection - this volume is "
+            "first-time issues, not failed fixes, and no customer here shows "
+            "churn-risk calling patterns."
+        )
 
     # ----------------------------------------------------------------- #
     # Views that need more data                                         #
@@ -450,6 +457,10 @@ with tab_insights:
                                title="First-contact resolution by product")
                         .update_xaxes(tickformat=".0%"),
                         width="stretch")
+        e1.caption(
+            "Broadband's 0% partly reflects the KAI+NET product bundling (two "
+            "different issues counted as one), not failed fixes."
+        )
         team = d.groupby(["PLANNING_GROUP_KB", "HANDLING"]).size().reset_index(name="tickets")
         e2.plotly_chart(px.bar(team, x="PLANNING_GROUP_KB", y="tickets", color="HANDLING",
                                barmode="stack", title="Workload per support team"),
